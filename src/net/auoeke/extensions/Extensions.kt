@@ -45,7 +45,7 @@ fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence)
     return false
 }
 
-inline fun String.contains(vararg sequences: CharSequence): Boolean = this.endsWith(false, *sequences)
+inline fun String.contains(vararg sequences: CharSequence): Boolean = this.contains(false, *sequences)
 
 fun String.endsWith(ignoreCase: Boolean = false, vararg suffixes: CharSequence): Boolean {
     suffixes.forEach {
