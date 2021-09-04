@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "net.auoeke"
-version = "0.0.0"
+version = "0.0.1"
 
 sourceSets {
     main {
@@ -20,6 +20,10 @@ tasks.withType<KotlinCompile> {
 
 repositories {
     mavenCentral()
+}
+
+java {
+    withSourcesJar()
 }
 
 publishing {
