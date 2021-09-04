@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id("maven-publish")
     kotlin("jvm") version "latest.release"
@@ -14,7 +12,7 @@ sourceSets {
     }
 }
 
-tasks.withType<KotlinCompile> {
+tasks.compileKotlin {
     kotlinOptions.jvmTarget = targetCompatibility
 }
 
