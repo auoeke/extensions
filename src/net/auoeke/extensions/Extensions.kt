@@ -35,16 +35,16 @@ inline fun <T> runIf(condition: Boolean, transformation: () -> T): T? = when {
 }
 
 @Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
-inline fun <T> Boolean.thenLet(action: () -> T): T? = when {
-    this -> action()
-    else -> null
-}
-
-@Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
-inline fun Boolean.then(action: () -> Unit) {
+inline fun Boolean.then(action: () -> Unit): Boolean = this.also {
     if (this) {
         action()
     }
+}
+
+@Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
+inline fun <T> Boolean.thenLet(action: () -> T): T? = when {
+    this -> action()
+    else -> null
 }
 
 fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence): Boolean {
