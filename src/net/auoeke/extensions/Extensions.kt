@@ -23,14 +23,24 @@ inline fun <T> T.letIf(condition: Boolean, transformation: (T) -> T): T = when {
     else -> this
 }
 
-inline fun <T> T.alsoIf(condition: Boolean, action: (T) -> Unit): T {
+inline fun <T> T.alsoIf(condition: Boolean, action: (T) -> Unit): T = this.also {
     if (condition) {
         action(this)
     }
-
-    return this
 }
 
+inline fun <T> runIf(condition: Boolean, transformation: () -> T): T? = when {
+    condition -> transformation()
+    else -> null
+}
+
+@Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
+inline fun <T> Boolean.thenLet(action: () -> T): T? = when {
+    this -> action()
+    else -> null
+}
+
+@Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
 inline fun Boolean.then(action: () -> Unit) {
     if (this) {
         action()
