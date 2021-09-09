@@ -18,8 +18,6 @@ inline val File.asPath: Path get() = this.toPath()
 inline fun <reified T> type(): Class<T> = T::class.java
 inline fun property(name: String): String? = System.getProperty(name)
 
-inline fun <reified T> Any?.cast() = this as T
-
 inline fun <T> T.letIf(condition: Boolean, transformation: (T) -> T): T = when {
     condition -> transformation(this)
     else -> this
@@ -48,6 +46,15 @@ inline fun <T> Boolean.thenLet(action: () -> T): T? = when {
     this -> action()
     else -> null
 }
+
+inline fun <reified T> Any?.cast() = this as T
+inline fun <E> Iterator<E>.asMutable(): MutableIterator<E> = this as MutableIterator<E>
+inline fun <E> Iterable<E>.asMutable(): MutableIterable<E> = this as MutableIterable<E>
+inline fun <E> Collection<E>.asMutable(): MutableCollection<E> = this as MutableCollection<E>
+inline fun <E> List<E>.asMutable(): MutableList<E> = this as MutableList<E>
+inline fun <E> Set<E>.asMutable(): MutableSet<E> = this as MutableSet<E>
+inline fun <K, V> Map.Entry<K, V>.asMutable(): MutableMap.MutableEntry<K, V> = this as MutableMap.MutableEntry<K, V>
+inline fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> = this as MutableMap<K, V>
 
 fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence): Boolean {
     sequences.forEach {
