@@ -18,6 +18,8 @@ inline val File.asPath: Path get() = this.toPath()
 inline fun <reified T> type(): Class<T> = T::class.java
 inline fun property(name: String): String? = System.getProperty(name)
 
+inline fun <reified T> Any?.cast() = this as T
+
 inline fun <T> T.letIf(condition: Boolean, transformation: (T) -> T): T = when {
     condition -> transformation(this)
     else -> this
