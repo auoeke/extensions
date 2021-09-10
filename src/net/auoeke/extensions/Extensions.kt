@@ -66,6 +66,16 @@ fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
     }
 }
 
+fun <T> Iterator<T>.find(predicate: (T) -> Boolean, action: (T) -> Unit): T? = null.also {
+    while (this.hasNext()) {
+        val element = this.next()
+
+        if (predicate(element)) {
+            return element.also {action(it)}
+        }
+    }
+}
+
 fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence): Boolean = false.also {
     sequences.forEach {
         this.contains(it, ignoreCase).then {return true}
