@@ -56,22 +56,19 @@ inline fun <E> Set<E>.asMutable(): MutableSet<E> = this as MutableSet<E>
 inline fun <K, V> Map.Entry<K, V>.asMutable(): MutableMap.MutableEntry<K, V> = this as MutableMap.MutableEntry<K, V>
 inline fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> = this as MutableMap<K, V>
 
-fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
-    while (this.hasNext()) {
-        val element = this.next()
-
-        if (predicate(element)) {
-            return element
+inline fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
+    this.forEach {
+        if (predicate(it)) {
+            return it
         }
     }
 }
 
-fun <T> Iterator<T>.find(predicate: (T) -> Boolean, action: (T) -> Unit): T? = null.also {
-    while (this.hasNext()) {
-        val element = this.next()
-
-        if (predicate(element)) {
-            return element.also {action(it)}
+@Suppress("UNCHECKED_CAST")
+inline fun <T, O : T> Iterator<T>.find(predicate: (T) -> Boolean, action: (O) -> Unit): O? = null.also {
+    this.forEach {
+        if (predicate(it)) {
+            return (it as O).also {o -> action(o)}
         }
     }
 }
