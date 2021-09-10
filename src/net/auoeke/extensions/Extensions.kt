@@ -1,4 +1,4 @@
-@file:Suppress("NOTHING_TO_INLINE")
+@file:Suppress("NOTHING_TO_INLINE", "unused")
 
 package net.auoeke.extensions
 
@@ -56,22 +56,28 @@ inline fun <E> Set<E>.asMutable(): MutableSet<E> = this as MutableSet<E>
 inline fun <K, V> Map.Entry<K, V>.asMutable(): MutableMap.MutableEntry<K, V> = this as MutableMap.MutableEntry<K, V>
 inline fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> = this as MutableMap<K, V>
 
-fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence): Boolean {
+fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
+    while (this.hasNext()) {
+        val element = this.next()
+
+        if (predicate(element)) {
+            return element
+        }
+    }
+}
+
+fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence): Boolean = false.also {
     sequences.forEach {
         this.contains(it, ignoreCase).then {return true}
     }
-
-    return false
 }
 
 inline fun String.contains(vararg sequences: CharSequence): Boolean = this.contains(false, *sequences)
 
-fun String.endsWith(ignoreCase: Boolean = false, vararg suffixes: CharSequence): Boolean {
+fun String.endsWith(ignoreCase: Boolean = false, vararg suffixes: CharSequence): Boolean = false.also {
     suffixes.forEach {
         this.endsWith(it, ignoreCase).then {return true}
     }
-
-    return false
 }
 
 inline fun String.endsWith(vararg suffixes: CharSequence): Boolean = this.endsWith(false, *suffixes)
