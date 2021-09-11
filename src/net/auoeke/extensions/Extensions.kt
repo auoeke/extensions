@@ -49,6 +49,7 @@ inline fun <T> Boolean.thenLet(action: () -> T): T? = when {
 
 inline fun <reified T> Any?.cast() = this as T
 inline fun <E> Iterator<E>.asMutable(): MutableIterator<E> = this as MutableIterator<E>
+inline fun <E> ListIterator<E>.asMutable(): MutableListIterator<E> = this as MutableListIterator<E>
 inline fun <E> Iterable<E>.asMutable(): MutableIterable<E> = this as MutableIterable<E>
 inline fun <E> Collection<E>.asMutable(): MutableCollection<E> = this as MutableCollection<E>
 inline fun <E> List<E>.asMutable(): MutableList<E> = this as MutableList<E>
