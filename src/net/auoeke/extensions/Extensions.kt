@@ -11,11 +11,16 @@ import java.nio.file.*
 import java.nio.file.attribute.FileAttribute
 
 inline val Any?.string: String get() = this?.toString() ?: "null"
+
 inline val String.capitalized: String get() = replaceFirstChar(Char::uppercaseChar)
+inline val String.slashed: String get() = replace('.', '/')
+inline val String.dotted: String get() = replace('/', '.')
+
 inline val Path.exists: Boolean get() = Files.exists(this)
 inline val Path.file: File get() = toFile()
 inline val Path.uri: URI get() = toUri()
 inline val Path.url: URL get() = uri.toURL()
+
 inline val File.exists: Boolean get() = exists()
 inline val File.asPath: Path get() = toPath()
 
@@ -119,5 +124,4 @@ inline fun Path.mkdirs(vararg attributes: FileAttribute<*>): Path = Files.create
 inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, options: Set<FileVisitOption>): Path = Files.walkFileTree(this, options, depth, visitor)
 inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, vararg options: FileVisitOption): Path = this.walk(visitor, depth, options.toSet())
 inline fun Path.walk(visitor: FileVisitor<Path>, vararg options: FileVisitOption): Path = this.walk(visitor, Int.MAX_VALUE, *options)
-
 inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, FileWalker(action))
