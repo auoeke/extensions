@@ -67,6 +67,7 @@ inline fun <K, V> Map.Entry<K, V>.asMutable(): MutableMap.MutableEntry<K, V> = t
 inline fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> = this as MutableMap<K, V>
 
 inline fun <T> Array<T>.listIterator(): ArrayIterator<T> = ArrayIterator(this)
+inline fun CharSequence.listIterator(): ListIterator<Char> = StringIterator(this)
 
 inline fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
     this.forEach {
