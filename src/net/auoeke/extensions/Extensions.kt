@@ -86,6 +86,9 @@ inline fun <T, O : T> Iterator<T>.find(predicate: (T) -> Boolean, action: (O) ->
     }
 }
 
+fun String.count(char: Char): Int = count {it == char}
+fun String.count(substring: String): Int = Regex.fromLiteral(substring).findAll(this).count()
+
 fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence): Boolean = false.also {
     sequences.forEach {
         if (this.contains(it, ignoreCase)) {
