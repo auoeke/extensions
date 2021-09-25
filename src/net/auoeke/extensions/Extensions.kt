@@ -28,6 +28,8 @@ inline fun <reified T> type(): Class<T> = T::class.java
 inline fun <reified T> Any?.isArray(): Boolean = Array<T>::class.java.isInstance(this)
 inline fun property(name: String): String? = System.getProperty(name)
 
+inline fun Char.repeat(count: Int): String = string.repeat(count)
+
 inline fun <T> T.letIf(condition: Boolean, transformation: (T) -> T): T = when {
     condition -> transformation(this)
     else -> this

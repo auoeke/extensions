@@ -4,11 +4,15 @@ plugins {
 }
 
 group = "net.auoeke"
-version = "0.10.0"
+version = "0.11.0"
 
 sourceSets {
     main {
         java.srcDir("src")
+    }
+
+    test {
+        java.srcDir("test")
     }
 }
 
@@ -20,8 +24,17 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+}
+
 java {
     withSourcesJar()
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
 }
 
 publishing {
