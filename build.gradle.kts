@@ -16,10 +16,6 @@ sourceSets {
     }
 }
 
-tasks.compileKotlin {
-    kotlinOptions.jvmTarget = targetCompatibility
-}
-
 repositories {
     mavenCentral()
 }
@@ -30,10 +26,16 @@ dependencies {
 }
 
 java {
+    targetCompatibility = JavaVersion.VERSION_17
+
     withSourcesJar()
 }
 
-tasks.named<Test>("test") {
+tasks.compileKotlin {
+    kotlinOptions.jvmTarget = targetCompatibility
+}
+
+tasks.test {
     useJUnitPlatform()
 }
 
