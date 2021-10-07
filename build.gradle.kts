@@ -26,7 +26,7 @@ dependencies {
 }
 
 java {
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_16.also {targetCompatibility = it}
 
     withSourcesJar()
 }
