@@ -30,6 +30,9 @@ inline fun property(name: String): String? = System.getProperty(name)
 
 inline fun Char.repeat(count: Int): String = string.repeat(count)
 
+inline operator fun File.div(relative: File) = resolve(relative)
+inline operator fun File.div(relative: String) = resolve(relative)
+
 inline fun <T> T.letIf(condition: Boolean, transformation: (T) -> T): T = when {
     condition -> transformation(this)
     else -> this
