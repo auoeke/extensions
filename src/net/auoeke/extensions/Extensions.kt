@@ -172,3 +172,6 @@ inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, opt
 inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, vararg options: FileVisitOption): Path = walk(visitor, depth, options.toSet())
 inline fun Path.walk(visitor: FileVisitor<Path>, vararg options: FileVisitOption): Path = walk(visitor, Int.MAX_VALUE, *options)
 inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, FileWalker(action))
+
+inline fun Path.newFileSystem(loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, loader)
+inline fun Path.newFileSystem(env: Map<String, *>, loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, env, loader)
