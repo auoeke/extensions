@@ -14,11 +14,25 @@ import kotlin.io.path.deleteExisting
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.toPath
 
-inline val Any?.string: String get() = this?.toString() ?: "null"
+inline val Any.string: String get() = toString()
+
+@get:JvmName("nullableString")
+inline val Any?.string: String get() = toString()
 
 inline val <reified T : Any> T.type: Class<T> get() = javaClass
 inline val Any.loader: ClassLoader? get() = type.classLoader
-inline val Any.codeSource: CodeSource? get() = type.codeSource
+
+inline val Class<*>.codeSource: CodeSource? get() = type.protectionDomain.codeSource
+inline val Class<*>.codeURL: URL? get() = codeSource?.location
+inline val Class<*>.codeURI: URI? get() = codeURL?.asURI
+inline val Class<*>.codePath: Path? get() = codeURL?.asPath
+inline val Class<*>.codeFile: File? get() = codeURL?.asFile
+
+inline val Any.codeSource: CodeSource? get() = type.protectionDomain.codeSource
+inline val Any.codeURL: URL? get() = codeSource?.location
+inline val Any.codeURI: URI? get() = codeURL?.asURI
+inline val Any.codePath: Path? get() = codeURL?.asPath
+inline val Any.codeFile: File? get() = codeURL?.asFile
 
 inline val String.capitalized: String get() = replaceFirstChar(Char::uppercaseChar)
 inline val String.slashed: String get() = replace('.', '/')
@@ -155,6 +169,6 @@ inline fun Path.write(contents: ByteArray, vararg options: OpenOption): Path = F
 inline fun Path.mkdirs(vararg attributes: FileAttribute<*>): Path = Files.createDirectories(this, *attributes)
 
 inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, options: Set<FileVisitOption>): Path = Files.walkFileTree(this, options, depth, visitor)
-inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, vararg options: FileVisitOption): Path = this.walk(visitor, depth, options.toSet())
-inline fun Path.walk(visitor: FileVisitor<Path>, vararg options: FileVisitOption): Path = this.walk(visitor, Int.MAX_VALUE, *options)
+inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, vararg options: FileVisitOption): Path = walk(visitor, depth, options.toSet())
+inline fun Path.walk(visitor: FileVisitor<Path>, vararg options: FileVisitOption): Path = walk(visitor, Int.MAX_VALUE, *options)
 inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, FileWalker(action))
