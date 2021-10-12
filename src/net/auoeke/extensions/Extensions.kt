@@ -9,20 +9,40 @@ import java.net.URI
 import java.net.URL
 import java.nio.file.*
 import java.nio.file.attribute.FileAttribute
+import java.security.CodeSource
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.toPath
 
 inline val Any?.string: String get() = this?.toString() ?: "null"
+
+inline val <reified T : Any> T.type: Class<T> get() = javaClass
+inline val Any.loader: ClassLoader? get() = type.classLoader
+inline val Any.codeSource: CodeSource? get() = type.codeSource
 
 inline val String.capitalized: String get() = replaceFirstChar(Char::uppercaseChar)
 inline val String.slashed: String get() = replace('.', '/')
 inline val String.dotted: String get() = replace('/', '.')
 
 inline val Path.exists: Boolean get() = Files.exists(this)
-inline val Path.file: File get() = toFile()
-inline val Path.uri: URI get() = toUri()
-inline val Path.url: URL get() = uri.toURL()
+inline val Path.asFile: File get() = toFile()
+inline val Path.asURI: URI get() = toUri()
+inline val Path.asURL: URL get() = asURI.toURL()
 
 inline val File.exists: Boolean get() = exists()
 inline val File.asPath: Path get() = toPath()
+inline val File.asURI: URI get() = toURI()
+inline val File.asURL: URL get() = asURI.asURL
+
+inline val URL.exists: Boolean get() = asPath.exists
+inline val URL.asPath: Path get() = asURI.asPath
+inline val URL.asFile: File get() = asURI.asFile
+inline val URL.asURI: URI get() = toURI()
+
+inline val URI.exists: Boolean get() = toPath().exists
+inline val URI.asPath: Path get() = toPath()
+inline val URI.asFile: File get() = asPath.asFile
+inline val URI.asURL: URL get() = toURL()
 
 inline fun <reified T> type(): Class<T> = T::class.java
 inline fun <reified T> Any?.isArray(): Boolean = Array<T>::class.java.isInstance(this)
@@ -76,7 +96,7 @@ inline fun <T> Array<T>.listIterator(): ArrayIterator<T> = ArrayIterator(this)
 inline fun CharSequence.listIterator(): ListIterator<Char> = StringIterator(this)
 
 inline fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
-    this.forEach {
+    forEach {
         if (predicate(it)) {
             return it
         }
@@ -85,7 +105,7 @@ inline fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
 
 @Suppress("UNCHECKED_CAST")
 inline fun <T, O : T> Iterator<T>.find(predicate: (T) -> Boolean, action: (O) -> Unit): O? = null.also {
-    this.forEach {
+    forEach {
         if (predicate(it)) {
             return (it as O).also {o -> action(o)}
         }
@@ -97,7 +117,7 @@ fun String.count(substring: String): Int = Regex.fromLiteral(substring).findAll(
 
 fun String.contains(ignoreCase: Boolean = false, vararg sequences: CharSequence): Boolean = false.also {
     sequences.forEach {
-        if (this.contains(it, ignoreCase)) {
+        if (contains(it, ignoreCase)) {
             return true
         }
     }
@@ -107,7 +127,7 @@ inline fun String.contains(vararg sequences: CharSequence): Boolean = this.conta
 
 fun String.endsWith(ignoreCase: Boolean = false, vararg suffixes: CharSequence): Boolean = false.also {
     suffixes.forEach {
-        if (this.endsWith(it, ignoreCase)) {
+        if (endsWith(it, ignoreCase)) {
             return true
         }
     }
@@ -115,14 +135,17 @@ fun String.endsWith(ignoreCase: Boolean = false, vararg suffixes: CharSequence):
 
 inline fun String.endsWith(vararg suffixes: CharSequence): Boolean = this.endsWith(false, *suffixes)
 
+inline fun Path.list(glob: String = "*"): List<Path> = listDirectoryEntries(glob)
+inline fun Path.listRecursively(): List<Path> = list("**")
+
 inline fun Path.copy(destination: Path, vararg options: CopyOption): Path = Files.copy(this, destination, *options)
 inline fun Path.copy(destination: OutputStream): Long = Files.copy(this, destination)
 inline fun InputStream.copy(destination: Path, vararg options: CopyOption): Long = Files.copy(this, destination, *options)
 
-inline fun Path.delete(recursive: Boolean = false) {
+inline fun Path.delete(recurse: Boolean = false) {
     when {
-        recursive -> this.walk(TreeDeleter)
-        else -> Files.delete(this)
+        recurse -> walk(TreeDeleter)
+        else -> deleteExisting()
     }
 }
 
