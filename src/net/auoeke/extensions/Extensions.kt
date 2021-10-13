@@ -190,3 +190,5 @@ fun Class<*>.hierarchy(excludeObject: Boolean) = hierarchy(when {
     excludeObject -> null
     else -> type<Any>()
 })
+
+inline fun <reified T> Class<*>.hierarchy() = hierarchy(T::class.java)
