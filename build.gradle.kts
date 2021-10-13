@@ -1,61 +1,84 @@
+import org.jetbrains.kotlin.konan.properties.loadProperties
+import org.jetbrains.kotlin.utils.addToStdlib.cast
+
 plugins {
     id("maven-publish")
     kotlin("jvm") version "latest.release"
 }
 
-group = "net.auoeke"
-version = "0.18.0"
-
-val java = "16"
-
-sourceSets {
-    main {
-        java.srcDir("src")
+allprojects {
+    plugins.apply {
+        apply("maven-publish")
+        apply("org.jetbrains.kotlin.jvm")
     }
 
-    test {
-        java.srcDir("test")
+    group = "net.auoeke.extensions"
+    version = "0.18.0"
+
+    sourceSets {
+        main {
+            java.srcDir("src")
+        }
+
+        test {
+            java.srcDir("test")
+        }
     }
-}
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-}
-
-java {
-    sourceCompatibility = JavaVersion.toVersion(java).also {targetCompatibility = it}
-
-    withSourcesJar()
-}
-
-tasks.compileKotlin {
-    kotlinOptions.jvmTarget = java
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-publishing {
     repositories {
-        maven {
-            url = uri("https://maven.auoeke.net")
+        mavenCentral()
+    }
 
-            credentials {
-                username = System.getProperty("maven.username")
-                password = System.getProperty("maven.password")
+    dependencies {
+        testImplementation("org.junit.jupiter:junit-jupiter-api:latest.release")
+        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    }
+
+    "16".let {java ->
+        java {
+            sourceCompatibility = JavaVersion.toVersion(java).also {targetCompatibility = it}
+            withSourcesJar()
+        }
+
+        tasks.compileKotlin {
+            kotlinOptions.jvmTarget = java
+        }
+    }
+
+    tasks.test {
+        useJUnitPlatform()
+    }
+
+    if (project == rootProject || project.projectDir.relativeTo(rootProject.rootDir).startsWith("modules")) {
+        publishing {
+            repositories {
+                maven {
+                    url = uri("https://maven.auoeke.net")
+
+                    credentials {
+                        username = System.getProperty("maven.username")
+                        password = System.getProperty("maven.password")
+                    }
+                }
+            }
+
+            publications {
+                register("main", MavenPublication::class) {
+                    from(components["java"])
+                }
             }
         }
     }
+}
 
-    publications {
-        register("main", MavenPublication::class) {
-            from(components["java"])
-        }
+subprojects {
+    dependencies {
+        api(rootProject)
+    }
+}
+
+loadProperties("dependencies.properties").cast<Map<String, String>>().forEach {
+    project(it.key).dependencies {
+        it.value.split(" ").forEach {dependency -> compileOnly("$dependency:latest.release")}
     }
 }

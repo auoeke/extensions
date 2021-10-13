@@ -12,9 +12,11 @@ import java.nio.file.*
 import java.nio.file.attribute.FileAttribute
 import java.security.CodeSource
 import java.security.ProtectionDomain
+import java.util.*
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.toPath
+import kotlin.reflect.KClass
 
 inline val Any.string: String get() = toString()
 
@@ -22,7 +24,7 @@ inline val Any.string: String get() = toString()
 inline val Any?.string: String get() = toString()
 
 inline val <reified T : Any> T.type: Class<T> get() = javaClass
-inline val Any.loader: ClassLoader? get() = type.classLoader
+inline val Class<*>.loader: ClassLoader? get() = classLoader
 inline val Any.classes: List<Class<*>> get() = type.hierarchy
 
 inline val Class<*>.hierarchy: List<Class<*>> get() = hierarchy(null)
@@ -63,8 +65,11 @@ inline val URI.asFile: File get() = asPath.asFile
 inline val URI.asURL: URL get() = toURL()
 
 inline fun <reified T> type(): Class<T> = T::class.java
-inline fun <reified T> Any?.isArray(): Boolean = Array<T>::class.java.isInstance(this)
+inline fun <reified T> Any?.isArray(): Boolean = type<Array<T>>().isInstance(this)
+
 inline fun property(name: String): String? = System.getProperty(name)
+inline fun Any.resource(name: String): InputStream? = type.getResourceAsStream(name)
+inline fun Any.Properties(name: String): Properties = Properties().also {it.load(resource(name))}
 
 inline fun Char.repeat(count: Int): String = string.repeat(count)
 
@@ -195,46 +200,74 @@ fun Class<*>.hierarchy(excludeObject: Boolean) = hierarchy(when {
 
 inline fun <reified T> Class<*>.hierarchy() = hierarchy(type<T>())
 
-fun Instrumentation.transform(transformer: ClassTransformer) = addTransformer(transformer)
+fun internalName(type: Any): String = when (type) {
+    is Class<*> -> when {
+        type.isArray -> '[' + internalName(type.componentType)
+        else -> type.descriptorString().removeSurrounding("L", ";")
+    }
+    is KClass<*> -> internalName(type.java)
+    else -> when (type) {
+        is String -> type
+        else -> type.string
+    }.replace('.', '/')
+}
 
-fun Instrumentation.transform(transformer: (ClassLoader?, String, Class<*>?, ProtectionDomain?, ByteArray) -> ByteArray) = transform {_, loader, name, type, domain, bytecode ->
+inline fun <reified T : Any> internalName(): String = internalName(T::class.javaObjectType)
+
+fun descriptor(type: Any): String = when (type) {
+    is Class<*> -> type.descriptorString()
+    is KClass<*> -> type.java.descriptorString()
+    is Char -> type.string
+    else -> 'L' + when (type) {
+        is String -> type
+        else -> type.string
+    }.replace('.', '/') + ';'
+}
+
+inline fun <reified T : Any> descriptor(): String = descriptor(T::class.javaObjectType)
+
+fun methodDescriptor(returnType: Any, vararg parameterTypes: Any): String = "(${parameterTypes.joinToString("") {descriptor(it)}})${descriptor(returnType)}"
+
+inline fun Instrumentation.transform(transformer: ClassTransformer) = addTransformer(transformer)
+
+inline fun Instrumentation.transform(crossinline transformer: (ClassLoader?, String, Class<*>?, ProtectionDomain?, ByteArray) -> ByteArray) = transform {_, loader, name, type, domain, bytecode ->
     transformer(loader, name, type, domain, bytecode)
 }
 
-fun Instrumentation.transform(transformer: (ClassLoader?, String, Class<*>?, ByteArray) -> ByteArray) = transform {_, loader, name, type, _, bytecode ->
+inline fun Instrumentation.transform(crossinline transformer: (ClassLoader?, String, Class<*>?, ByteArray) -> ByteArray) = transform {_, loader, name, type, _, bytecode ->
     transformer(loader, name, type, bytecode)
 }
 
-fun Instrumentation.transform(transformer: (String, Class<*>?, ByteArray) -> ByteArray) = transform {_, _, name, type, _, bytecode ->
+inline fun Instrumentation.transform(crossinline transformer: (String, Class<*>?, ByteArray) -> ByteArray) = transform {_, _, name, type, _, bytecode ->
     transformer(name, type, bytecode)
 }
 
-fun Instrumentation.transform(transformer: (String, ByteArray) -> ByteArray) = transform {_, _, name, _, _, bytecode ->
+inline fun Instrumentation.transform(crossinline transformer: (String, ByteArray) -> ByteArray) = transform {_, _, name, _, _, bytecode ->
     transformer(name, bytecode)
 }
 
-fun Instrumentation.transform(transformer: (ByteArray) -> ByteArray) = transform {_, _, _, _, _, bytecode ->
+inline fun Instrumentation.transform(crossinline transformer: (ByteArray) -> ByteArray) = transform {_, _, _, _, _, bytecode ->
     transformer(bytecode)
 }
 
 // @formatter:off
-fun Instrumentation.transformDefinitions(transformer: (Module, ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transform {module, loader, name, type, domain, bytecode -> when {
+inline fun Instrumentation.transformDefinitions(crossinline transformer: (Module, ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transform {module, loader, name, type, domain, bytecode -> when {
     type === null -> transformer(module, loader, name, domain, bytecode)
     else -> bytecode
 }}
 
-fun Instrumentation.transformDefinitions(transformer: (ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, domain, bytecode ->
+inline fun Instrumentation.transformDefinitions(crossinline transformer: (ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, domain, bytecode ->
     transformer(loader, name, domain, bytecode)
 }
 
-fun Instrumentation.transformDefinitions(transformer: (ClassLoader?, String, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, _, bytecode -> transformer(loader, name, bytecode)}
-fun Instrumentation.transformDefinitions(transformer: (String, ByteArray) -> ByteArray) = transformDefinitions {_, _, name, _, bytecode -> transformer(name, bytecode)}
-fun Instrumentation.transformDefinitions(transformer: (ByteArray) -> ByteArray) = transformDefinitions {_, _, _, _, bytecode -> transformer(bytecode)}
+inline fun Instrumentation.transformDefinitions(crossinline transformer: (ClassLoader?, String, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, _, bytecode -> transformer(loader, name, bytecode)}
+inline fun Instrumentation.transformDefinitions(crossinline transformer: (String, ByteArray) -> ByteArray) = transformDefinitions {_, _, name, _, bytecode -> transformer(name, bytecode)}
+inline fun Instrumentation.transformDefinitions(crossinline transformer: (ByteArray) -> ByteArray) = transformDefinitions {_, _, _, _, bytecode -> transformer(bytecode)}
 // @formatter:on
 
-fun Instrumentation.retransform(transformer: (Class<*>, ByteArray) -> ByteArray) = transform {_, _, _, type, _, bytecode -> when {
+inline fun Instrumentation.retransform(crossinline transformer: (Class<*>, ByteArray) -> ByteArray) = transform {_, _, _, type, _, bytecode -> when {
     type === null -> bytecode
     else -> transformer(type, bytecode)
 }}
 
-fun Instrumentation.retransform(transformer: (ByteArray) -> ByteArray) = retransform {_, bytecode -> transformer(bytecode)}
+inline fun Instrumentation.retransform(crossinline transformer: (ByteArray) -> ByteArray) = retransform {_, bytecode -> transformer(bytecode)}
