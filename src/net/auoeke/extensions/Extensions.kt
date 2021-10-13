@@ -21,6 +21,7 @@ inline val Any?.string: String get() = toString()
 
 inline val <reified T : Any> T.type: Class<T> get() = javaClass
 inline val Any.loader: ClassLoader? get() = type.classLoader
+inline val Any.classes: List<Class<*>> get() = type.hierarchy()
 
 inline val Class<*>.codeSource: CodeSource? get() = type.protectionDomain.codeSource
 inline val Class<*>.codeURL: URL? get() = codeSource?.location
@@ -175,3 +176,12 @@ inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFil
 
 inline fun Path.newFileSystem(loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, loader)
 inline fun Path.newFileSystem(env: Map<String, *>, loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, env, loader)
+
+fun Class<*>.hierarchy(excludeObject: Boolean = false): List<Class<*>> = ArrayList<Class<*>>().also {
+    var type: Class<*>? = this
+
+    while (type !== null && (!excludeObject || type !== type<Any>())) {
+        it += type
+        type = type.superclass
+    }
+}
