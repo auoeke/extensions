@@ -5,11 +5,13 @@ package net.auoeke.extensions
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.instrument.Instrumentation
 import java.net.URI
 import java.net.URL
 import java.nio.file.*
 import java.nio.file.attribute.FileAttribute
 import java.security.CodeSource
+import java.security.ProtectionDomain
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.toPath
@@ -191,4 +193,48 @@ fun Class<*>.hierarchy(excludeObject: Boolean) = hierarchy(when {
     else -> type<Any>()
 })
 
-inline fun <reified T> Class<*>.hierarchy() = hierarchy(T::class.java)
+inline fun <reified T> Class<*>.hierarchy() = hierarchy(type<T>())
+
+fun Instrumentation.transform(transformer: ClassTransformer) = addTransformer(transformer)
+
+fun Instrumentation.transform(transformer: (ClassLoader?, String, Class<*>?, ProtectionDomain?, ByteArray) -> ByteArray) = transform {_, loader, name, type, domain, bytecode ->
+    transformer(loader, name, type, domain, bytecode)
+}
+
+fun Instrumentation.transform(transformer: (ClassLoader?, String, Class<*>?, ByteArray) -> ByteArray) = transform {_, loader, name, type, _, bytecode ->
+    transformer(loader, name, type, bytecode)
+}
+
+fun Instrumentation.transform(transformer: (String, Class<*>?, ByteArray) -> ByteArray) = transform {_, _, name, type, _, bytecode ->
+    transformer(name, type, bytecode)
+}
+
+fun Instrumentation.transform(transformer: (String, ByteArray) -> ByteArray) = transform {_, _, name, _, _, bytecode ->
+    transformer(name, bytecode)
+}
+
+fun Instrumentation.transform(transformer: (ByteArray) -> ByteArray) = transform {_, _, _, _, _, bytecode ->
+    transformer(bytecode)
+}
+
+// @formatter:off
+fun Instrumentation.transformDefinitions(transformer: (Module, ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transform {module, loader, name, type, domain, bytecode -> when {
+    type === null -> transformer(module, loader, name, domain, bytecode)
+    else -> bytecode
+}}
+
+fun Instrumentation.transformDefinitions(transformer: (ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, domain, bytecode ->
+    transformer(loader, name, domain, bytecode)
+}
+
+fun Instrumentation.transformDefinitions(transformer: (ClassLoader?, String, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, _, bytecode -> transformer(loader, name, bytecode)}
+fun Instrumentation.transformDefinitions(transformer: (String, ByteArray) -> ByteArray) = transformDefinitions {_, _, name, _, bytecode -> transformer(name, bytecode)}
+fun Instrumentation.transformDefinitions(transformer: (ByteArray) -> ByteArray) = transformDefinitions {_, _, _, _, bytecode -> transformer(bytecode)}
+// @formatter:on
+
+fun Instrumentation.retransform(transformer: (Class<*>, ByteArray) -> ByteArray) = transform {_, _, _, type, _, bytecode -> when {
+    type === null -> bytecode
+    else -> transformer(type, bytecode)
+}}
+
+fun Instrumentation.retransform(transformer: (ByteArray) -> ByteArray) = retransform {_, bytecode -> transformer(bytecode)}

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "net.auoeke"
-version = "0.17.1"
+version = "0.18.0"
 
 val java = "16"
 
