@@ -4,7 +4,9 @@ plugins {
 }
 
 group = "net.auoeke"
-version = "0.17.0"
+version = "0.17.1"
+
+val java = "16"
 
 sourceSets {
     main {
@@ -26,13 +28,13 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_16.also {targetCompatibility = it}
+    sourceCompatibility = JavaVersion.toVersion(java).also {targetCompatibility = it}
 
     withSourcesJar()
 }
 
 tasks.compileKotlin {
-    kotlinOptions.jvmTarget = targetCompatibility
+    kotlinOptions.jvmTarget = java
 }
 
 tasks.test {
