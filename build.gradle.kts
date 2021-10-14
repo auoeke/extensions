@@ -15,7 +15,7 @@ allprojects {
     }
 
     group = "net.auoeke.extensions"
-    version = "0.18.0"
+    version = "0.19.0"
 
     sourceSets {
         main {

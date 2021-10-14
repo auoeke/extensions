@@ -87,8 +87,14 @@ inline fun <T> T.alsoIf(condition: Boolean, action: (T) -> Unit): T = also {
     }
 }
 
-inline fun <T> runIf(condition: Boolean, transformation: () -> T): T? = when {
-    condition -> transformation()
+inline fun <T, R> T.applyIf(condition: Boolean, action: T.() -> R): T = apply {
+    if (condition) {
+        action()
+    }
+}
+
+inline fun <T, R> T.runIf(condition: Boolean, function: T.() -> R): R? = when {
+    condition -> function()
     else -> null
 }
 
