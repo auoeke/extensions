@@ -4,6 +4,7 @@ plugins {
 
 tasks.jar {
     from("${rootProject.rootDir}/dependencies.properties")
+    from("${rootProject.rootDir}/gradle.properties")
 }
 
 gradlePlugin {

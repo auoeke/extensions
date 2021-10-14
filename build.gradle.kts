@@ -1,5 +1,7 @@
-import org.jetbrains.kotlin.konan.properties.loadProperties
-import org.jetbrains.kotlin.utils.addToStdlib.cast
+
+import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.konan.properties.*
+import org.jetbrains.kotlin.utils.addToStdlib.*
 
 plugins {
     id("maven-publish")
@@ -13,9 +15,6 @@ allprojects {
         apply("maven-publish")
         apply("org.jetbrains.kotlin.jvm")
     }
-
-    group = "net.auoeke.extensions"
-    version = "0.19.0"
 
     sourceSets {
         main {
@@ -42,7 +41,7 @@ allprojects {
             withSourcesJar()
         }
 
-        tasks.compileKotlin {
+        tasks.withType<KotlinCompile> {
             kotlinOptions.jvmTarget = version
         }
     }

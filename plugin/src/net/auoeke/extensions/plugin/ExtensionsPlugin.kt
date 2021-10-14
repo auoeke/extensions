@@ -1,11 +1,9 @@
 package net.auoeke.extensions.plugin
 
-import net.auoeke.extensions.Properties
-import net.auoeke.extensions.type
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+import net.auoeke.extensions.*
+import org.gradle.api.*
 
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "unused")
 class ExtensionsPlugin : Plugin<Project> {
     private val Project.extension get(): Extension = extensions.getByType(type<Extension>())
 
@@ -24,20 +22,23 @@ class ExtensionsPlugin : Plugin<Project> {
     private fun Project.afterEvaluation() {
         add("extensions")
 
-        modules.forEach {module ->
-            val dependencies = module.value.split(" ").toHashSet()
+        modules.withEach {
+            val dependencies = value.split(" ").toHashSet()
 
             configurations.getByName("compileClasspath").allDependencies.all {
                 if (dependencies.remove("${it.group}:${it.name}") && dependencies.isEmpty()) {
-                    add(module.key)
+                    add(key)
                 }
             }
         }
     }
 
-    private fun Project.add(module: String) = extension.configurations.forEach {dependencies.add(it, "net.auoeke.extensions:$module:latest.release")}
+    private fun Project.add(module: String) = extension.configurations.each {
+        dependencies.add(it, "${coordinates["group"]}:$module:${coordinates["version"]}")
+    }
 
     private companion object {
-        val modules = Properties("/dependencies.properties") as Map<String, String>
+        val coordinates = Properties(type.localResource("/gradle.properties")!!)
+        val modules = Properties(type.localResource("/dependencies.properties")!!)
     }
 }
