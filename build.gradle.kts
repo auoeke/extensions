@@ -51,19 +51,19 @@ allprojects {
         useJUnitPlatform()
     }
 
-    if (project == rootProject || project.isModule) {
-        publishing {
-            repositories {
-                maven {
-                    url = uri("https://maven.auoeke.net")
+    publishing {
+        repositories {
+            maven {
+                url = uri("https://maven.auoeke.net")
 
-                    credentials {
-                        username = System.getProperty("maven.username")
-                        password = System.getProperty("maven.password")
-                    }
+                credentials {
+                    username = System.getProperty("maven.username")
+                    password = System.getProperty("maven.password")
                 }
             }
+        }
 
+        if (project == rootProject || project.isModule) {
             publications {
                 register("main", MavenPublication::class) {
                     from(components["java"])
