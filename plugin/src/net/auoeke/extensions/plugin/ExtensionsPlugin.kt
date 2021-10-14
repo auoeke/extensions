@@ -19,10 +19,11 @@ class ExtensionsPlugin : Plugin<Project> {
 
     private fun Project.configure() {
         extensions.create("kextensions", type<Extension>())
-        add("extensions")
     }
 
     private fun Project.afterEvaluation() {
+        add("extensions")
+
         modules.forEach {module ->
             val dependencies = module.value.split(" ").toHashSet()
 

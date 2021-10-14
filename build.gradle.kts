@@ -6,6 +6,8 @@ plugins {
     kotlin("jvm") version "latest.release"
 }
 
+val Project.isModule: Boolean get() = projectDir.relativeTo(rootProject.rootDir).startsWith("modules")
+
 allprojects {
     plugins.apply {
         apply("maven-publish")
@@ -34,14 +36,14 @@ allprojects {
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     }
 
-    "16".let {java ->
+    "16".let {version ->
         java {
-            sourceCompatibility = JavaVersion.toVersion(java).also {targetCompatibility = it}
+            sourceCompatibility = JavaVersion.toVersion(version).also {targetCompatibility = it}
             withSourcesJar()
         }
 
         tasks.compileKotlin {
-            kotlinOptions.jvmTarget = java
+            kotlinOptions.jvmTarget = version
         }
     }
 
@@ -49,7 +51,7 @@ allprojects {
         useJUnitPlatform()
     }
 
-    if (project == rootProject || project.projectDir.relativeTo(rootProject.rootDir).startsWith("modules")) {
+    if (project == rootProject || project.isModule) {
         publishing {
             repositories {
                 maven {
@@ -70,6 +72,14 @@ allprojects {
         }
     }
 }
+
+// @formatter:off
+subprojects.filter {it.isModule}.forEach {it.run {
+    tasks.withType<Jar> {
+        archiveBaseName.set("extensions-${project.name}")
+    }
+}}
+// @formatter:on
 
 subprojects {
     dependencies {
