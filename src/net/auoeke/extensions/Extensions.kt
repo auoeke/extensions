@@ -171,7 +171,7 @@ inline fun InputStream.copy(destination: Path, vararg options: CopyOption): Long
 
 inline val Manifest.version: String? get() = mainAttributes("Implementation-Version")
 
-inline operator fun Attributes.invoke(name: String): String = getValue(name)
+inline operator fun Attributes.invoke(name: String): String? = getValue(name)
 inline operator fun Properties.invoke(name: String): String = getProperty(name)
 
 inline fun Properties.each(action: (Map.Entry<String, String>) -> Unit) = forEach {action(it as Map.Entry<String, String>)}
