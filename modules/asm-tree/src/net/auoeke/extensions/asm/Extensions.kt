@@ -1,24 +1,23 @@
 package net.auoeke.extensions.asm
 
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
-import java.io.InputStream
-import kotlin.reflect.KClass
+import net.auoeke.extensions.*
+import org.objectweb.asm.*
+import org.objectweb.asm.tree.*
+import java.io.*
+import java.nio.file.*
+import kotlin.io.path.*
 
-fun ClassNode(bytecode: ByteArray, options: Int = 0, initializer: (ClassNode) -> Unit = {}): ClassNode = ClassNode().apply {
+inline fun ClassNode(bytecode: ByteArray, options: Int = 0, initializer: ClassNode.() -> Unit = {}): ClassNode = ClassNode().apply {
     ClassReader(bytecode).accept(this, options)
-    initializer(this)
+    initializer()
 }
 
-fun ClassNode(stream: InputStream, options: Int = 0, initializer: (ClassNode) -> Unit = {}): ClassNode = ClassNode().apply {
-    ClassReader(stream).accept(this, options)
-    initializer(this)
-}
+inline fun ClassNode(stream: InputStream, options: Int = 0, initializer: ClassNode.() -> Unit = {}): ClassNode = ClassNode(stream.readBytes(), options, initializer)
+inline fun ClassNode(path: Path, options: Int = 0, initializer: ClassNode.() -> Unit = {}): ClassNode = ClassNode(path.inputStream(), options, initializer)
+inline fun ClassNode(name: String, options: Int = 0, initializer: ClassNode.() -> Unit = {}): ClassNode = ClassNode(Path("${name.slashed}.class"), options, initializer)
+inline fun ClassNode(type: Class<*>, options: Int = 0, initializer: ClassNode.() -> Unit = {}): ClassNode = ClassNode(type.path!!, options, initializer)
 
-fun ClassNode.visit(version: Int, access: Int, name: String, superclass: String? = "java/lang/Object", signature: String? = null, vararg interfaces: String = arrayOf()): ClassNode = apply {
+fun ClassNode.visit(version: Int, access: Int, name: String, superclass: String? = "java/lang/Object", signature: String? = null, vararg interfaces: String): ClassNode = apply {
     visit(version, access, name, signature, superclass, interfaces)
 }
 
