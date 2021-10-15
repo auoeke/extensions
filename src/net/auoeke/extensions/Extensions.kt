@@ -187,6 +187,7 @@ inline fun <T, R> T.runIf(condition: Boolean, function: T.() -> R): R? = when {
 
 inline fun <T> T.applyIf(condition: Boolean, action: T.() -> Unit): T = apply {runIf(condition, action)}
 inline fun <T, R> T.letIf(condition: Boolean, transformation: (T) -> R): R? = runIf(condition, transformation)
+inline fun <T> T.mapIf(condition: Boolean, transformation: (T) -> T): T = runIf(condition, transformation) ?: this
 inline fun <T> T.alsoIf(condition: Boolean, action: (T) -> Unit): T = applyIf(condition, action)
 
 @Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
