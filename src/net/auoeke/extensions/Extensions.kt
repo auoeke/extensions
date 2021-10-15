@@ -238,10 +238,23 @@ inline fun <T> Iterator<T>.find(predicate: (T) -> Boolean): T? = null.also {
 inline fun <T, O : T> Iterator<T>.find(predicate: (T) -> Boolean, action: (O) -> Unit): O? = null.also {
     each {
         if (predicate(it)) {
-            return (it as O).also {o -> action(o)}
+            return (it as O).also(action)
         }
     }
 }
+
+inline fun <T, M : MutableMap<T, T?>> Iterator<T>.toMap(map: M): M = map.also {
+    each {
+        map[it] = when {
+            hasNext() -> next()
+            else -> null
+        }
+    }
+}
+
+inline fun <T> Iterator<T>.toMap(): LinkedHashMap<T, T?> = toMap(LinkedHashMap<T, T?>())
+inline fun <T, M : MutableMap<T, T?>> Iterable<T>.toMap(map: M): M = iterator().toMap(map)
+inline fun <T> Iterable<T>.toMap(): LinkedHashMap<T, T?> = iterator().toMap()
 
 fun CharSequence.count(char: Char): Int = count {it == char}
 fun CharSequence.count(substring: String): Int = Regex.fromLiteral(substring).findAll(this).count()
