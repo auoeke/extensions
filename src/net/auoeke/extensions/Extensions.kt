@@ -258,6 +258,8 @@ inline fun <T> Iterator<T>.toMap(): HashMap<T, T?> = toMap(HashMap<T, T?>())
 inline fun <T, M : MutableMap<T, T?>> Iterable<T>.toMap(map: M): M = iterator().toMap(map)
 inline fun <T> Iterable<T>.toMap(): HashMap<T, T?> = iterator().toMap()
 
+inline fun <T> MutableCollection<T>.add(vararg values: T) = values.each {this.add(it)}
+
 fun CharSequence.count(char: Char): Int = count {it == char}
 fun CharSequence.count(substring: String): Int = Regex.fromLiteral(substring).findAll(this).count()
 inline fun CharSequence.containsAny(ignoreCase: Boolean, vararg sequences: CharSequence): Boolean = sequences.any {contains(it, ignoreCase)}
