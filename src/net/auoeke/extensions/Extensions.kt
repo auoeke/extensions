@@ -150,6 +150,7 @@ inline val URI.exists: Boolean get() = toPath().exists
 inline val URI.asFile: File get() = asPath.asFile
 inline val URI.asURL: URL get() = toURL()
 
+// @formatter:off
 val URI.asPath: Path get() = try {
     toPath()
 } catch (exception: FileSystemNotFoundException) {
@@ -166,6 +167,7 @@ val URI.filesystem: FileSystem get() = when (scheme) {
         newFilesystem
     }
 }
+// @formatter:on
 
 inline fun InputStream.copy(destination: Path, vararg options: CopyOption): Long = Files.copy(this, destination, *options)
 
@@ -267,44 +269,16 @@ inline fun CharSequence.remove(@RegExp pattern: String): String = remove(pattern
 
 inline fun Instrumentation.transform(transformer: ClassTransformer) = addTransformer(transformer)
 
-inline fun Instrumentation.transform(crossinline transformer: (ClassLoader?, String, Class<*>?, ProtectionDomain?, ByteArray) -> ByteArray) = transform {_, loader, name, type, domain, bytecode ->
-    transformer(loader, name, type, domain, bytecode)
+inline fun Instrumentation.pretransform(crossinline transformer: (Module, ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transform {module, loader, name, type, domain, bytecode ->
+    when (type) {
+        null -> transformer(module, loader, name, domain, bytecode)
+        else -> bytecode
+    }
 }
 
-inline fun Instrumentation.transform(crossinline transformer: (ClassLoader?, String, Class<*>?, ByteArray) -> ByteArray) = transform {_, loader, name, type, _, bytecode ->
-    transformer(loader, name, type, bytecode)
+inline fun Instrumentation.retransform(transformer: ClassTransformer) = transform {module, loader, name, type, domain, bytecode ->
+    when (type) {
+        null -> bytecode
+        else -> transformer.transform(module, loader, name, type, domain, bytecode)
+    }
 }
-
-inline fun Instrumentation.transform(crossinline transformer: (String, Class<*>?, ByteArray) -> ByteArray) = transform {_, _, name, type, _, bytecode ->
-    transformer(name, type, bytecode)
-}
-
-inline fun Instrumentation.transform(crossinline transformer: (String, ByteArray) -> ByteArray) = transform {_, _, name, _, _, bytecode ->
-    transformer(name, bytecode)
-}
-
-inline fun Instrumentation.transform(crossinline transformer: (ByteArray) -> ByteArray) = transform {_, _, _, _, _, bytecode ->
-    transformer(bytecode)
-}
-
-// @formatter:off
-inline fun Instrumentation.transformDefinitions(crossinline transformer: (Module, ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transform {module, loader, name, type, domain, bytecode -> when {
-    type === null -> transformer(module, loader, name, domain, bytecode)
-    else -> bytecode
-}}
-
-inline fun Instrumentation.transformDefinitions(crossinline transformer: (ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, domain, bytecode ->
-    transformer(loader, name, domain, bytecode)
-}
-
-inline fun Instrumentation.transformDefinitions(crossinline transformer: (ClassLoader?, String, ByteArray) -> ByteArray) = transformDefinitions {_, loader, name, _, bytecode -> transformer(loader, name, bytecode)}
-inline fun Instrumentation.transformDefinitions(crossinline transformer: (String, ByteArray) -> ByteArray) = transformDefinitions {_, _, name, _, bytecode -> transformer(name, bytecode)}
-inline fun Instrumentation.transformDefinitions(crossinline transformer: (ByteArray) -> ByteArray) = transformDefinitions {_, _, _, _, bytecode -> transformer(bytecode)}
-// @formatter:on
-
-inline fun Instrumentation.retransform(crossinline transformer: (Class<*>, ByteArray) -> ByteArray) = transform {_, _, _, type, _, bytecode -> when {
-    type === null -> bytecode
-    else -> transformer(type, bytecode)
-}}
-
-inline fun Instrumentation.retransform(crossinline transformer: (ByteArray) -> ByteArray) = retransform {_, bytecode -> transformer(bytecode)}
