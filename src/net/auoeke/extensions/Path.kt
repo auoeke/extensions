@@ -6,6 +6,7 @@ import java.io.*
 import java.net.*
 import java.nio.file.*
 import java.nio.file.attribute.*
+import java.time.*
 import kotlin.io.path.*
 
 inline val Path.exists: Boolean get() = Files.exists(this)
@@ -13,9 +14,11 @@ inline val Path.asFile: File get() = toFile()
 inline val Path.asURI: URI get() = toUri()
 inline val Path.asURL: URL get() = asURI.toURL()
 inline val Path.newFilesystem: FileSystem get() = FileSystems.newFileSystem(this)
+inline val Path.attributes: BasicFileAttributes get() = readAttributes()
 inline val Path.mtime: FileTime get() = getLastModifiedTime()
 
 inline fun Path.mtime(vararg options: LinkOption): FileTime = getLastModifiedTime(*options)
+inline fun Path.updateMtime() = setLastModifiedTime(FileTime.from(Instant.now()))
 inline fun Path.copy(destination: Path, vararg options: CopyOption): Path = Files.copy(this, destination, *options)
 inline fun Path.copy(destination: OutputStream): Long = Files.copy(this, destination)
 inline fun Path.list(glob: String = "*"): List<Path> = listDirectoryEntries(glob)
