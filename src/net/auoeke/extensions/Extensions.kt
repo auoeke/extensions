@@ -5,19 +5,17 @@ package net.auoeke.extensions
 import org.intellij.lang.annotations.*
 import java.io.*
 import java.lang.instrument.*
-import java.net.*
 import java.nio.file.*
-import java.nio.file.attribute.*
 import java.security.*
 import java.util.*
 import java.util.jar.*
 import java.util.stream.*
-import kotlin.io.path.*
 import kotlin.reflect.*
+import kotlin.system.*
 
 inline fun println(vararg x: Any?) = kotlin.io.println(x.joinToString(" "))
 inline fun property(name: String): String? = System.getProperty(name)
-inline fun <reified T> type(): Class<T> = T::class.java
+inline fun time(action: () -> Unit): Long = measureNanoTime(action)
 
 fun internalName(type: Any): String = when (type) {
     is Class<*> -> when {
@@ -31,8 +29,6 @@ fun internalName(type: Any): String = when (type) {
     }.replace('.', '/')
 }
 
-inline fun <reified T : Any> internalName(): String = internalName(T::class.javaObjectType)
-
 fun descriptor(type: Any): String = when (type) {
     is Class<*> -> type.descriptorString()
     is KClass<*> -> type.java.descriptorString()
@@ -43,134 +39,11 @@ fun descriptor(type: Any): String = when (type) {
     }.replace('.', '/') + ';'
 }
 
-inline fun <reified T : Any> descriptor(): String = descriptor(T::class.javaObjectType)
-
 fun methodDescriptor(returnType: Any, vararg parameterTypes: Any): String = "(${parameterTypes.joinToString("") {descriptor(it)}})${descriptor(returnType)}"
 
-inline val Any.string: String get() = toString()
-inline val Any?.string: String @JvmName("nullableString") get() = toString()
-inline val Array<*>.string: String get() = contentToString()
-inline val Any.classes: List<Class<*>> get() = type.hierarchy
-inline fun <reified T> Any?.cast() = this as T
-inline fun <reified T> Any?.isArray(): Boolean = type<Array<T>>().isInstance(this)
-inline val <reified T : Any> T.type: Class<T> get() = javaClass
-inline fun Any.wait() = (this as Object).wait()
-inline fun Any.notify() = (this as Object).notify()
-inline fun Any.notifyAll() = (this as Object).notifyAll()
-inline fun Any.Properties(stream: InputStream): Properties = Properties().apply {load(stream)}
-inline fun Any.Properties(path: Path): Properties = Properties(path.inputStream())
-inline fun Any.Properties(name: String): Properties = Properties(type.resource(name)!!)
-inline fun Any.Manifest(): Manifest = Manifest(type.localResource("META-INF/MANIFEST.MF")!!.inputStream())
-
-inline val Class<*>.loader: ClassLoader? get() = classLoader
-inline val Class<*>.hierarchy: List<Class<*>> get() = hierarchy(null)
-inline val Class<*>.codeSource: CodeSource? get() = protectionDomain?.codeSource
-inline val Class<*>.path: Path? get() = resource("/${name.slashed}.class")
-inline val Class<*>.source: Path? get() = path?.ascend(name.count('.') + 1)
-
-inline fun Class<*>.resource(name: String): Path? = getResource(name)?.asPath
-inline fun Class<*>.resourceStream(name: String): InputStream? = getResourceAsStream(name)
-inline fun Class<*>.localResource(path: String): Path? = source?.resolve(path)
-
-fun Class<*>.hierarchy(limit: Class<*>?): List<Class<*>> = ArrayList<Class<*>>().also {
-    var type: Class<*>? = this
-
-    while (type !== limit) {
-        it += type!!.apply {type = superclass}
-    }
-}
-
-fun Class<*>.hierarchy(excludeObject: Boolean) = hierarchy(when {
-    excludeObject -> null
-    else -> type<Any>()
-})
-
-inline fun <reified T> Class<*>.hierarchy() = hierarchy(type<T>())
-
-inline val KClass<*>.superclass: Class<*> get() = java.superclass
-inline val KClass<*>.loader: ClassLoader? get() = java.loader
-inline val KClass<*>.hierarchy: List<Class<*>> get() = java.hierarchy
-inline val KClass<*>.codeSource: CodeSource? get() = java.codeSource
-inline val KClass<*>.path: Path? get() = java.path
-inline val KClass<*>.source: Path? get() = java.source
-
-inline fun KClass<*>.resource(name: String): Path? = java.resource(name)
-inline fun KClass<*>.resourceStream(name: String): InputStream? = java.resourceStream(name)
-inline fun KClass<*>.localResource(path: String): Path? = java.localResource(path)
-
-inline fun ClassLoader.resource(name: String): Path? = getResource(name)?.asPath
-inline fun ClassLoader.resourceStream(name: String): InputStream? = getResourceAsStream(name)
-
-inline val String.capitalized: String get() = replaceFirstChar(Char::uppercaseChar)
-inline val String.slashed: String get() = replace('.', '/')
-inline val String.dotted: String get() = replace('/', '.')
-
-inline val Path.exists: Boolean get() = Files.exists(this)
-inline val Path.asFile: File get() = toFile()
-inline val Path.asURI: URI get() = toUri()
-inline val Path.asURL: URL get() = asURI.toURL()
-inline val Path.newFilesystem: FileSystem get() = FileSystems.newFileSystem(this)
-
-inline fun Path.copy(destination: Path, vararg options: CopyOption): Path = Files.copy(this, destination, *options)
-inline fun Path.copy(destination: OutputStream): Long = Files.copy(this, destination)
-inline fun Path.list(glob: String = "*"): List<Path> = listDirectoryEntries(glob)
-inline fun Path.listDeep(): List<Path> = list("**")
-
-inline fun Path.delete(recurse: Boolean = false): Path = when {
-    recurse -> walk(TreeDeleter)
-    else -> apply {deleteExisting()}
-}
-
-inline fun Path.move(destination: Path, vararg options: CopyOption): Path = Files.move(this, destination, *options)
-inline fun Path.write(contents: String, vararg options: OpenOption): Path = Files.writeString(this, contents, *options)
-inline fun Path.write(contents: ByteArray, vararg options: OpenOption): Path = Files.write(this, contents, *options)
-inline fun Path.mkdirs(vararg attributes: FileAttribute<*>): Path = Files.createDirectories(this, *attributes)
-inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, options: Set<FileVisitOption>): Path = Files.walkFileTree(this, options, depth, visitor)
-inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, vararg options: FileVisitOption): Path = walk(visitor, depth, options.toSet())
-inline fun Path.walk(visitor: FileVisitor<Path>, vararg options: FileVisitOption): Path = walk(visitor, Int.MAX_VALUE, *options)
-inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, FileWalker(action))
-inline fun Path.newFilesystem(loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, loader)
-inline fun Path.newFilesystem(env: Map<String, *>, loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, env, loader)
-
-inline fun Path.same(other: Path): Boolean = isSameFileAs(other)
-inline fun Path.parent(level: Int): Path = root.applyIf(level > 0) {resolve(subpath(0, level))}
-inline fun Path.ascend(levels: Int): Path = parent(nameCount - levels)
-
-inline val File.exists: Boolean get() = exists()
-inline val File.asPath: Path get() = toPath()
-inline val File.asURI: URI get() = toURI()
-inline val File.asURL: URL get() = asURI.asURL
-
-inline operator fun File.div(relative: File) = resolve(relative)
-inline operator fun File.div(relative: String) = resolve(relative)
-
-inline val URL.exists: Boolean get() = asPath.exists
-inline val URL.asPath: Path get() = asURI.asPath
-inline val URL.asFile: File get() = asURI.asFile
-inline val URL.asURI: URI get() = toURI()
-
-inline val URI.exists: Boolean get() = toPath().exists
-inline val URI.asFile: File get() = asPath.asFile
-inline val URI.asURL: URL get() = toURL()
-
-// @formatter:off
-val URI.asPath: Path get() = try {
-    toPath()
-} catch (exception: FileSystemNotFoundException) {
-    newFilesystem.provider().getPath(this)
-}
-
-inline val URI.newFilesystem: FileSystem get() = FileSystems.newFileSystem(this, mapOf<String, Any>())
-
-val URI.filesystem: FileSystem get() = when (scheme) {
-    "file" -> FileSystems.getDefault()
-    else -> try {
-        FileSystems.getFileSystem(this)
-    } catch (exception: FileSystemNotFoundException) {
-        newFilesystem
-    }
-}
-// @formatter:on
+inline fun <reified T> type(): Class<T> = T::class.java
+inline fun <reified T : Any> internalName(): String = internalName(T::class.javaObjectType)
+inline fun <reified T : Any> descriptor(): String = descriptor(T::class.javaObjectType)
 
 inline fun InputStream.copy(destination: Path, vararg options: CopyOption): Long = Files.copy(this, destination, *options)
 
