@@ -56,6 +56,7 @@ inline fun <reified T> Any?.isArray(): Boolean = type<Array<T>>().isInstance(thi
 inline val <reified T : Any> T.type: Class<T> get() = javaClass
 inline fun Any.wait() = (this as Object).wait()
 inline fun Any.notify() = (this as Object).notify()
+inline fun Any.notifyAll() = (this as Object).notifyAll()
 inline fun Any.Properties(stream: InputStream): Properties = Properties().apply {load(stream)}
 inline fun Any.Properties(path: Path): Properties = Properties(path.inputStream())
 inline fun Any.Properties(name: String): Properties = Properties(type.resource(name)!!)
