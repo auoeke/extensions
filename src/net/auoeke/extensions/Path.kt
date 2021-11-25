@@ -29,6 +29,12 @@ inline fun Path.delete(recurse: Boolean = false): Path = when {
     else -> apply {deleteExisting()}
 }
 
+inline fun Path.tryDelete(recurse: Boolean = false): Path = apply {
+    if (exists) {
+        delete(recurse)
+    }
+}
+
 inline fun Path.move(destination: Path, vararg options: CopyOption): Path = Files.move(this, destination, *options)
 inline fun Path.write(contents: String, vararg options: OpenOption): Path = Files.writeString(this, contents, *options)
 inline fun Path.write(contents: ByteArray, vararg options: OpenOption): Path = Files.write(this, contents, *options)
