@@ -1,4 +1,4 @@
-@file:Suppress("NOTHING_TO_INLINE", "unused", "UNCHECKED_CAST")
+@file:Suppress("NOTHING_TO_INLINE", "unused", "UNCHECKED_CAST", "PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package net.auoeke.extensions
 
@@ -54,6 +54,8 @@ inline val Any.classes: List<Class<*>> get() = type.hierarchy
 inline fun <reified T> Any?.cast() = this as T
 inline fun <reified T> Any?.isArray(): Boolean = type<Array<T>>().isInstance(this)
 inline val <reified T : Any> T.type: Class<T> get() = javaClass
+inline fun Any.wait() = (this as Object).wait()
+inline fun Any.notify() = (this as Object).notify()
 inline fun Any.Properties(stream: InputStream): Properties = Properties().apply {load(stream)}
 inline fun Any.Properties(path: Path): Properties = Properties(path.inputStream())
 inline fun Any.Properties(name: String): Properties = Properties(type.resource(name)!!)
