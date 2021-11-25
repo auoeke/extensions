@@ -10,6 +10,7 @@ import java.security.*
 import java.util.*
 import java.util.jar.*
 import java.util.stream.*
+import kotlin.io.path.*
 import kotlin.reflect.*
 import kotlin.system.*
 
@@ -40,6 +41,8 @@ fun descriptor(type: Any): String = when (type) {
 }
 
 fun methodDescriptor(returnType: Any, vararg parameterTypes: Any): String = "(${parameterTypes.joinToString("") {descriptor(it)}})${descriptor(returnType)}"
+inline fun Properties(stream: InputStream): Properties = Properties().apply {load(stream)}
+inline fun Properties(path: Path): Properties = Properties(path.inputStream())
 
 inline fun <reified T> type(): Class<T> = T::class.java
 inline fun <reified T : Any> internalName(): String = internalName(T::class.javaObjectType)

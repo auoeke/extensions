@@ -5,6 +5,9 @@ package net.auoeke.extensions
 import java.io.*
 import java.nio.file.*
 import java.security.*
+import java.util.*
+import java.util.jar.*
+import kotlin.io.path.*
 import kotlin.reflect.*
 
 inline val Class<*>.loader: ClassLoader? get() = classLoader
@@ -15,7 +18,9 @@ inline val Class<*>.source: Path? get() = path?.ascend(name.count('.') + 1)
 
 inline fun Class<*>.resource(name: String): Path? = getResource(name)?.asPath
 inline fun Class<*>.resourceStream(name: String): InputStream? = getResourceAsStream(name)
-inline fun Class<*>.localResource(path: String): Path? = source?.resolve(path)
+inline fun Class<*>.localResource(name: String): Path? = path?.resolve(name)
+inline fun Class<*>.manifest(): Manifest = Manifest(localResource("/META-INF/MANIFEST.MF")!!.inputStream())
+inline fun Class<*>.properties(name: String): Properties = Properties(resource(name)!!)
 
 fun Class<*>.hierarchy(limit: Class<*>?): List<Class<*>> = ArrayList<Class<*>>().also {
     var type: Class<*>? = this
