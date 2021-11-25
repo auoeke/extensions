@@ -13,7 +13,9 @@ inline val Path.asFile: File get() = toFile()
 inline val Path.asURI: URI get() = toUri()
 inline val Path.asURL: URL get() = asURI.toURL()
 inline val Path.newFilesystem: FileSystem get() = FileSystems.newFileSystem(this)
+inline val Path.mtime: FileTime get() = getLastModifiedTime()
 
+inline fun Path.mtime(vararg options: LinkOption): FileTime = getLastModifiedTime(*options)
 inline fun Path.copy(destination: Path, vararg options: CopyOption): Path = Files.copy(this, destination, *options)
 inline fun Path.copy(destination: OutputStream): Long = Files.copy(this, destination)
 inline fun Path.list(glob: String = "*"): List<Path> = listDirectoryEntries(glob)
@@ -34,7 +36,6 @@ inline fun Path.walk(visitor: FileVisitor<Path>, vararg options: FileVisitOption
 inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, FileWalker(action))
 inline fun Path.newFilesystem(loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, loader)
 inline fun Path.newFilesystem(env: Map<String, *>, loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, env, loader)
-
 inline fun Path.same(other: Path): Boolean = isSameFileAs(other)
 inline fun Path.parent(level: Int): Path = root.applyIf(level > 0) {resolve(subpath(0, level))}
 inline fun Path.ascend(levels: Int): Path = parent(nameCount - levels)
