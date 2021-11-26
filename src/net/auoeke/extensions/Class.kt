@@ -15,11 +15,11 @@ inline val Class<*>.hierarchy: List<Class<*>> get() = hierarchy(null)
 inline val Class<*>.codeSource: CodeSource? get() = protectionDomain?.codeSource
 inline val Class<*>.path: Path? get() = resource("/${name.slashed}.class")
 inline val Class<*>.source: Path? get() = path?.ascend(name.count('.') + 1)
+inline val Class<*>.manifest: Manifest get() = Manifest(localResource("/META-INF/MANIFEST.MF")!!.inputStream())
 
 inline fun Class<*>.resource(name: String): Path? = getResource(name)?.asPath
 inline fun Class<*>.resourceStream(name: String): InputStream? = getResourceAsStream(name)
 inline fun Class<*>.localResource(name: String): Path? = path?.resolve(name)
-inline fun Class<*>.manifest(): Manifest = Manifest(localResource("/META-INF/MANIFEST.MF")!!.inputStream())
 inline fun Class<*>.properties(name: String): Properties = Properties(resource(name)!!)
 
 fun Class<*>.hierarchy(limit: Class<*>?): List<Class<*>> = ArrayList<Class<*>>().also {
