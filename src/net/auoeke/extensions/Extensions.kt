@@ -2,21 +2,25 @@
 
 package net.auoeke.extensions
 
-import org.intellij.lang.annotations.*
 import java.io.*
-import java.lang.instrument.*
 import java.nio.file.*
-import java.security.*
-import java.util.*
-import java.util.jar.*
 import java.util.stream.*
-import kotlin.io.path.*
 import kotlin.reflect.*
 import kotlin.system.*
 
 inline fun println(vararg x: Any?) = kotlin.io.println(x.joinToString(" "))
 inline fun property(name: String): String? = System.getProperty(name)
 inline fun time(action: () -> Unit): Long = measureNanoTime(action)
+
+inline fun time(action: () -> Unit, finally: (Long) -> Unit) {
+    val start = System.nanoTime()
+
+    try {
+        action()
+    } finally {
+        finally(System.nanoTime() - start)
+    }
+}
 
 fun internalName(type: Any): String = when (type) {
     is Class<*> -> when {
@@ -41,23 +45,12 @@ fun descriptor(type: Any): String = when (type) {
 }
 
 fun methodDescriptor(returnType: Any, vararg parameterTypes: Any): String = "(${parameterTypes.joinToString("") {descriptor(it)}})${descriptor(returnType)}"
-inline fun Properties(stream: InputStream): Properties = Properties().apply {load(stream)}
-inline fun Properties(path: Path): Properties = Properties(path.inputStream())
 
 inline fun <reified T> type(): Class<T> = T::class.java
 inline fun <reified T : Any> internalName(): String = internalName(T::class.javaObjectType)
 inline fun <reified T : Any> descriptor(): String = descriptor(T::class.javaObjectType)
 
 inline fun InputStream.copy(destination: Path, vararg options: CopyOption): Long = Files.copy(this, destination, *options)
-
-inline val Manifest.version: String? get() = mainAttributes("Implementation-Version")
-
-inline operator fun Attributes.invoke(name: String): String? = getValue(name)
-inline operator fun Properties.invoke(name: String): String? = getProperty(name)
-
-inline fun Properties.each(action: (Map.Entry<String, String>) -> Unit) = forEach {action(it as Map.Entry<String, String>)}
-inline fun Properties.each(action: (String, String) -> Unit) = withEach {action(key, value)}
-inline fun Properties.withEach(action: Map.Entry<String, String>.() -> Unit) = each(action)
 
 inline fun Char.repeat(count: Int): String = string.repeat(count)
 
@@ -138,28 +131,3 @@ inline fun <T, M : MutableMap<T, T?>> Iterable<T>.toMap(map: M): M = iterator().
 inline fun <T> Iterable<T>.toMap(): HashMap<T, T?> = iterator().toMap()
 
 inline fun <T> MutableCollection<T>.add(vararg values: T) = values.each {this.add(it)}
-
-fun CharSequence.count(char: Char): Int = count {it == char}
-fun CharSequence.count(substring: String): Int = Regex.fromLiteral(substring).findAll(this).count()
-inline fun CharSequence.containsAny(ignoreCase: Boolean, vararg sequences: CharSequence): Boolean = sequences.any {contains(it, ignoreCase)}
-inline fun CharSequence.containsAny(vararg sequences: CharSequence): Boolean = containsAny(false, *sequences)
-inline fun CharSequence.endsWith(ignoreCase: Boolean = false, vararg suffixes: CharSequence): Boolean = suffixes.any {endsWith(it, ignoreCase)}
-inline fun CharSequence.endsWith(vararg suffixes: CharSequence): Boolean = endsWith(false, *suffixes)
-inline fun CharSequence.remove(pattern: Regex): String = replace(pattern, "")
-inline fun CharSequence.remove(@RegExp pattern: String): String = remove(pattern.toRegex())
-
-inline fun Instrumentation.transform(transformer: ClassTransformer) = addTransformer(transformer)
-
-inline fun Instrumentation.pretransform(crossinline transformer: (Module, ClassLoader?, String, ProtectionDomain?, ByteArray) -> ByteArray) = transform {module, loader, name, type, domain, bytecode ->
-    when (type) {
-        null -> transformer(module, loader, name, domain, bytecode)
-        else -> bytecode
-    }
-}
-
-inline fun Instrumentation.retransform(transformer: ClassTransformer) = transform {module, loader, name, type, domain, bytecode ->
-    when (type) {
-        null -> bytecode
-        else -> transformer.transform(module, loader, name, type, domain, bytecode)
-    }
-}
