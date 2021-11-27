@@ -12,11 +12,11 @@ inline fun println(vararg x: Any?) = kotlin.io.println(x.joinToString(" "))
 inline fun property(name: String): String? = System.getProperty(name)
 inline fun time(action: () -> Unit): Long = measureNanoTime(action)
 
-inline fun time(action: () -> Unit, finally: (Long) -> Unit) {
+inline fun <T> time(action: () -> T, finally: (Long) -> Unit): T {
     val start = System.nanoTime()
 
     try {
-        action()
+        return action()
     } finally {
         finally(System.nanoTime() - start)
     }
