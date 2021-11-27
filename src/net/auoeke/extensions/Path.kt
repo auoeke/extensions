@@ -46,5 +46,5 @@ inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFil
 inline fun Path.newFilesystem(loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, loader)
 inline fun Path.newFilesystem(env: Map<String, *>, loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, env, loader)
 inline fun Path.same(other: Path): Boolean = isSameFileAs(other)
-inline fun Path.parent(level: Int): Path = root.applyIf(level > 0) {resolve(subpath(0, level))}
+inline fun Path.parent(level: Int): Path = root.mapIf(level > 0) {resolve(subpath(0, level))}
 inline fun Path.ascend(levels: Int): Path = parent(nameCount - levels)
