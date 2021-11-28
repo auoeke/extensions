@@ -21,8 +21,11 @@ inline fun Path.mtime(vararg options: LinkOption): FileTime = getLastModifiedTim
 inline fun Path.updateMtime() = setLastModifiedTime(FileTime.from(Instant.now()))
 inline fun Path.copy(destination: Path, vararg options: CopyOption): Path = Files.copy(this, destination, *options)
 inline fun Path.copy(destination: OutputStream): Long = Files.copy(this, destination)
-inline fun Path.list(glob: String = "*"): List<Path> = listDirectoryEntries(glob)
-inline fun Path.listDeep(): List<Path> = list("**")
+inline fun Path.list(glob: String): List<Path> = listDirectoryEntries(glob)
+inline fun Path.list(recurse: Boolean = false): List<Path> = when {
+    recurse -> ArrayList<Path>().apply {walkFiles(this::add)}
+    else -> Files.list(this).toList()
+}
 
 inline fun Path.delete(recurse: Boolean = false): Path = when {
     recurse -> walk(TreeDeleter)
