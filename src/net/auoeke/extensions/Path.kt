@@ -22,9 +22,15 @@ inline fun Path.updateMtime() = setLastModifiedTime(FileTime.from(Instant.now())
 inline fun Path.copy(destination: Path, vararg options: CopyOption): Path = Files.copy(this, destination, *options)
 inline fun Path.copy(destination: OutputStream): Long = Files.copy(this, destination)
 inline fun Path.list(glob: String): List<Path> = listDirectoryEntries(glob)
+
 inline fun Path.list(recurse: Boolean = false): List<Path> = when {
-    recurse -> ArrayList<Path>().apply {walkFiles(this::add)}
+    recurse -> ArrayList<Path>().apply {walk {this.add(it)}}
     else -> Files.list(this).toList()
+}
+
+inline fun Path.listFiles(recurse: Boolean = false): List<Path> = when {
+    recurse -> ArrayList<Path>().apply {walkFiles(this::add)}
+    else -> Files.list(this).filter {!it.isDirectory()}.toList()
 }
 
 inline fun Path.delete(recurse: Boolean = false): Path = when {
@@ -45,7 +51,9 @@ inline fun Path.mkdirs(vararg attributes: FileAttribute<*>): Path = Files.create
 inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, options: Set<FileVisitOption>): Path = Files.walkFileTree(this, options, depth, visitor)
 inline fun Path.walk(visitor: FileVisitor<Path>, depth: Int = Int.MAX_VALUE, vararg options: FileVisitOption): Path = walk(visitor, depth, options.toSet())
 inline fun Path.walk(visitor: FileVisitor<Path>, vararg options: FileVisitOption): Path = walk(visitor, Int.MAX_VALUE, *options)
+inline fun Path.walk(vararg options: FileVisitOption, noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, options.toSet(), Int.MAX_VALUE, TreeWalker(action))
 inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, FileWalker(action))
+inline fun Path.walkFiles(vararg options: FileVisitOption, noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, options.toSet(), Int.MAX_VALUE, FileWalker(action))
 inline fun Path.newFilesystem(loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, loader)
 inline fun Path.newFilesystem(env: Map<String, *>, loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, env, loader)
 inline fun Path.same(other: Path): Boolean = isSameFileAs(other)
