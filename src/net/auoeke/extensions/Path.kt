@@ -16,6 +16,7 @@ inline val Path.asURL: URL get() = asURI.toURL()
 inline val Path.newFilesystem: FileSystem get() = FileSystems.newFileSystem(this)
 inline val Path.attributes: BasicFileAttributes get() = readAttributes()
 inline val Path.mtime: FileTime get() = getLastModifiedTime()
+inline val Path.real: Path get() = mapIf(exists) {toRealPath()}
 
 inline fun Path.mtime(vararg options: LinkOption): FileTime = getLastModifiedTime(*options)
 inline fun Path.updateMtime() = setLastModifiedTime(FileTime.from(Instant.now()))
@@ -56,6 +57,6 @@ inline fun Path.walkFiles(noinline action: (Path) -> Unit): Path = Files.walkFil
 inline fun Path.walkFiles(vararg options: FileVisitOption, noinline action: (Path) -> Unit): Path = Files.walkFileTree(this, options.toSet(), Int.MAX_VALUE, FileWalker(action))
 inline fun Path.newFilesystem(loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, loader)
 inline fun Path.newFilesystem(env: Map<String, *>, loader: ClassLoader? = null): FileSystem = FileSystems.newFileSystem(this, env, loader)
-inline fun Path.same(other: Path): Boolean = isSameFileAs(other)
+inline fun Path.same(other: Path): Boolean = exists && other.exists && isSameFileAs(other)
 inline fun Path.parent(level: Int): Path = root.mapIf(level > 0) {resolve(subpath(0, level))}
 inline fun Path.ascend(levels: Int): Path = parent(nameCount - levels)
